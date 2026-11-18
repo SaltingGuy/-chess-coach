@@ -12,9 +12,12 @@
 (function (root) {
   'use strict';
   var CT = root.CT = root.CT || {};
+  // Stockfish 19 Lite (NNUE, single-threaded WebAssembly; nmrugg/stockfish.js, GPL-3.0) first,
+  // then the old Stockfish 10 as a last resort.
   var CDN = [
-    'https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js',
-    'https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js'
+    { url: 'https://cdn.jsdelivr.net/npm/stockfish@19.0.1/bin/stockfish-19-lite-single.js', wasm: 'https://cdn.jsdelivr.net/npm/stockfish@19.0.1/bin/stockfish-19-lite-single.wasm' },
+    { url: 'https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js' },
+    { url: 'https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js' }
   ];
   var LOCAL = 'vendor/stockfish/stockfish.js';
 
@@ -51,7 +54,8 @@
     // A tiny "boot" worker that imports the engine script from the CDN.
     var code = 'importScripts(' + JSON.stringify(src.url) + ');';
     var blob = new Blob([code], { type: 'application/javascript' });
-    return new Worker(URL.createObjectURL(blob));
+    // WebAssembly builds look for their .wasm file in the worker's #hash when they are not loaded from their own folder.
+    return new Worker(URL.createObjectURL(blob) + (src.wasm ? '#' + encodeURIComponent(src.wasm) : ''));
   }
 
   function tryStart(src, timeoutMs) {
@@ -79,7 +83,7 @@
     if (testSources) return testSources;
     var list = [];
     if (/^https?:/.test(root.location.protocol)) list.push({ kind: 'local', url: LOCAL, label: 'bundled copy' });
-    CDN.forEach(function (u) { list.push({ kind: 'cdn', url: u, label: u.split('/')[2] }); });
+    CDN.forEach(function (c) { list.push({ kind: 'cdn', url: c.url, wasm: c.wasm, label: c.url.split('/')[2] }); });
     return list;
   }
 
@@ -95,7 +99,7 @@
         emit();
         return Promise.resolve(false);
       }
-      return tryStart(list[i], list[i].kind === 'local' ? 8000 : 25000).then(function (r) {
+      return tryStart(list[i], list[i].kind === 'local' ? 8000 : list[i].wasm ? 20000 : 25000).then(function (r) {
         worker = r.worker; engineName = r.name || 'Stockfish'; source = list[i].label; state = 'ready'; lastError = ''; multipvNow = 1;
         worker.onmessage = onLine;
         worker.onerror = function () { state = 'failed'; lastError = 'The engine crashed.'; emit(); };

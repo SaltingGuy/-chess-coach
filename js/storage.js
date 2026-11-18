@@ -27,6 +27,7 @@
       testouts: {},  // theme -> {attempts, passed, lastAt, lastScore}
       danger: {},    // back-rank danger position id -> {attempts, ok, box, due, lastAt, lastOk}
       session: null, // today's guided session (see js/session.js)
+      experiments: { active: null, history: [], n: 0 }, // the Coach's Lab (js/experiments.js)
       ccSync: {},    // chess.com auto-sync: {user, lastAt, lastEndTime, lastAdded, lastError, newIds}
       log: [],       // recent events: {t, kind, id, ok, theme?, ms?, hint?}
       days: {}       // 'YYYY-MM-DD' -> {puzzles, correct, drills, cleanDrills, quiz, quizOk}

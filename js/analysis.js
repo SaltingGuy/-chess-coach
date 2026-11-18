@@ -66,7 +66,7 @@
   };
 
   var stockfish = {
-    name: 'Stockfish', source: 'stockfish',
+    get name() { return (CT.Stockfish && CT.Stockfish.status().name) || 'Stockfish'; }, source: 'stockfish',
     evaluate: function (fen, depth) {
       var g = new (Chess())(fen), t = terminal(g);
       if (t) return Promise.resolve(t);
@@ -98,8 +98,10 @@
     return 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * cp)) - 1);
   }
   function moveAccuracy(loss) { return Math.max(0, Math.min(100, 103.1668 * Math.exp(-0.04354 * loss) - 3.1669)); }
-  function classify(loss) { return loss >= 30 ? 'blunder' : loss >= 20 ? 'mistake' : loss >= 10 ? 'inaccuracy' : 'good'; }
-  var SYMBOL = { blunder: '??', mistake: '?', inaccuracy: '?!', good: '', best: '' };
+  /* Same bands as chess.com's Game Review (winning chances lost, 0–100): blunder 20+, mistake 10–20,
+   * inaccuracy 5–10, good 2–5, excellent under 2; "best" = the engine's own move. */
+  function classify(loss) { return loss >= 20 ? 'blunder' : loss >= 10 ? 'mistake' : loss >= 5 ? 'inaccuracy' : loss >= 2 ? 'good' : 'excellent'; }
+  var SYMBOL = { blunder: '??', mistake: '?', inaccuracy: '?!', good: '', excellent: '', best: '' };
   function fmtEval(ev) {
     if (ev.mate != null && ev.mate !== 0) return (ev.mate > 0 ? '+' : '-') + 'M' + Math.abs(ev.mate);
     if (ev.mate === 0) return '#';
@@ -221,7 +223,7 @@
       var keepsMate = ea.mate != null && ea.mate * sgn > 0 || (ea.mate === 0 && ea.terminal === 'checkmate' && ((ea.cp > 0) === (color === 'w')));
       var allowsMate = ea.mate != null && ea.mate * sgn < 0 && !(eb.mate != null && eb.mate * sgn < 0);
       var cls = isBest ? 'best' : classify(loss);
-      if (hadMate && !keepsMate && cls === 'good') cls = 'inaccuracy';
+      if (hadMate && !keepsMate && (cls === 'good' || cls === 'excellent')) cls = 'inaccuracy';
       return {
         ply: ply, moveNo: Math.floor(ply / 2) + parseInt(fens[0].split(' ')[5] || '1', 10), color: color, san: m.san, from: m.from, to: m.to,
         fenBefore: fens[ply], fenAfter: fens[ply + 1], evalBefore: eb, evalAfter: ea, best: eb.best, bestPv: eb.pv,
@@ -229,7 +231,7 @@
         missedMate: hadMate && !keepsMate, allowsMate: allowsMate, reply: ea.best, replyPv: ea.pv
       };
     });
-    moves.forEach(function (mv) { if (mv.cls !== 'best' && mv.cls !== 'good') explain(mv); });
+    moves.forEach(function (mv) { if (mv.cls !== 'best' && mv.cls !== 'good' && mv.cls !== 'excellent') explain(mv); });
     var acc = { w: [], b: [] };
     moves.forEach(function (mv) { acc[mv.color].push(moveAccuracy(mv.loss)); });
     var avg = function (a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : null; };
@@ -453,7 +455,7 @@
   function simpleHash(s) { var h = 0; for (var i = 0; i < s.length; i++) { h = ((h << 5) - h + s.charCodeAt(i)) | 0; } return (h >>> 0).toString(36); }
 
   CT.Analysis = {
-    analyseGame: analyseGame, report: report, motifOf: motifOf, winPct: winPct, classify: classify,
+    analyseGame: analyseGame, report: report, motifOf: motifOf, winPct: winPct, classify: classify, countClasses: count,
     moveAccuracy: moveAccuracy, fmtEval: fmtEval, MOTIF_THEME: MOTIF_THEME, MOTIF_NAME: MOTIF_NAME, SYMBOL: SYMBOL, hash: simpleHash
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = { Analysis: CT.Analysis, Analyzer: CT.Analyzer };

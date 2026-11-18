@@ -16,6 +16,12 @@
     return '<p class="mt hung-stat"><strong>' + h.recent + '</strong> pieces hung per 10 games' + trend + '<br><span class="small muted">Your last ' + Math.min(10, h.games) + ' analysed games. Safety check before every move pushes this down.</span></p>';
   }
 
+  function labLine() {
+    if (!CT.Experiments) return '';
+    var st = CT.Experiments.status();
+    return st.active ? '<p class="small mt"><a href="#/progress/notebook">🔬 Experiment #' + st.active.id + ': ' + esc(st.title) + '</a> — ' + st.measured + '/' + st.needed + ' games measured</p>' : '';
+  }
+
   function render(view) {
     var Store = CT.Store, Coach = CT.Coach, D = CT.Data;
     var plan = Coach.dailyPlan(), totals = Store.totals(), tier = Coach.tierInfo();
@@ -88,7 +94,7 @@
           '<a class="btn primary plan-all" href="#/session">' + (live ? 'Resume the guided session ▶' : '▶ Do it all as one guided session') + '</a>' + planHtml +
           '<a class="plan-row" href="#/analysis"><span class="plan-ico">⌕</span><span class="plan-main"><strong>Review a real game</strong><small>Played a rapid game on chess.com? Paste it here for a coach report.</small></span><span class="btn small">Analyse</span></a></div>' +
         '<div class="card"><h2>Last 14 days</h2>' + chart +
-          '<h3 class="mt">Weak spots</h3><div class="chips">' + weak + '</div>' + hungHtml() +
+          '<h3 class="mt">Weak spots</h3><div class="chips">' + weak + '</div>' + hungHtml() + labLine() +
           '<h3 class="mt">Tier progress</h3><p class="small">' + (tier.tier < 4 ? esc(tier.need) + ' <span class="muted">Now ' + UI.pct(tier.recentAtTier ? tier.accuracyAtTier : null) + ' over ' + tier.recentAtTier + '.</span>' : 'All four tactical tiers unlocked.') + '</p></div>' +
       '</section>' +
       insightsCard() +

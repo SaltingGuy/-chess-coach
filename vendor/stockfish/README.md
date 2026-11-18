@@ -1,17 +1,14 @@
-# Optional: a bundled copy of Stockfish
+# Stockfish (bundled copy)
 
-By default the app downloads Stockfish (the browser build by nmrugg, "stockfish.js") from a public
-CDN the first time you analyse a game. Your browser then caches it.
+The app looks for `stockfish.js` + `stockfish.wasm` in this folder first, then downloads Stockfish 19 Lite
+(nmrugg/stockfish.js, the "lite single-threaded" NNUE build) from the jsDelivr CDN, and only as a last resort
+the old Stockfish 10. If nothing loads, it falls back to its small built-in engine and says so.
 
-If you host the app on a web address (for example GitHub Pages) and want it to work fully offline,
-put these two files in this folder:
+On the website (repo SaltingGuy/-chess-coach) the bundled files are fetched by the GitHub job
+`.github/workflows/stockfish.yml`, which downloads the `stockfish` npm package, copies the lite single-threaded
+build here and records the version and checksums in `SOURCE.txt`. To update, change `VERSION` there.
 
-- `stockfish.js`
-- `stockfish.wasm`
-
-You can get them from https://github.com/nmrugg/stockfish.js (the `Stockfish11` branch, `src/` folder).
-The app tries this folder first, then the CDN, and finally falls back to its small built-in engine.
+The single-threaded build is used because GitHub Pages cannot send the headers that multi-threaded
+WebAssembly needs. Browsers do not start engines from a page opened as a file (file://).
 
 Stockfish is licensed under the GNU GPL v3 (see https://stockfishchess.org).
-Note: browsers do not allow engines to start from a page opened directly as a file (file://),
-so the bundled copy is only used when the app is served from a web address.

@@ -3,7 +3,7 @@
 (function (root) {
   'use strict';
   var CT = root.CT, UI = CT.UI, esc = UI.esc;
-  var DEPTHS = [['10', 'Quick'], ['12', 'Standard'], ['15', 'Deep']];
+  var DEPTHS = [['12', 'Quick'], ['16', 'Standard'], ['20', 'Deep']];
 
   function tabs(active) {
     return '<header class="page-head"><div><h1>Game Analysis</h1><p class="muted">Import your games, get an engine review in plain language, and turn your own mistakes into training.</p></div>' +
@@ -170,7 +170,7 @@
         return [h.White, h.Black, h.Date, g.opening, h.Event].join(' ').toLowerCase().indexOf(q) >= 0;
       });
       listEl.innerHTML = items.length ? items.map(function (g) {
-        var h = g.headers || {}, r = g.report, c = g.analysis && g.userColor ? g.analysis.counts[g.userColor] : null;
+        var h = g.headers || {}, r = g.report, c = g.analysis && g.userColor ? CT.Games.countsOf(g)[g.userColor] : null;
         return '<li><a href="#/analysis/game/' + g.id + '"><strong>' + esc(h.White || 'White') + ' – ' + esc(h.Black || 'Black') + '</strong></a> ' +
           (r ? '<span class="tag ' + (r.outcome === 'won' ? 'ok' : r.outcome === 'lost' ? 'bad' : '') + '">' + r.outcome + '</span>' : (g.analysis ? '' : '<span class="tag">not analysed</span>')) +
           '<p class="small muted">' + esc(g.opening) + ' · ' + esc(h.Date || '') + (r ? ' · accuracy ' + Math.round(r.accuracy || 0) + '%' : '') + (c ? ' · ' + c.blunder + ' blunder' + (c.blunder === 1 ? '' : 's') : '') + '</p>' +
@@ -228,7 +228,7 @@
   function trendChart(games) {
     if (games.length < 2) return '<p class="muted">Analyse a few games to see your accuracy trend.</p>';
     var W = 320, H = 140, pad = 24;
-    var pts = games.map(function (g, i) { return { x: pad + i * (W - 2 * pad) / (games.length - 1), y: H - pad - (g.report.accuracy || 0) / 100 * (H - 2 * pad), a: g.report.accuracy, b: g.analysis.counts[g.userColor].blunder }; });
+    var pts = games.map(function (g, i) { return { x: pad + i * (W - 2 * pad) / (games.length - 1), y: H - pad - (g.report.accuracy || 0) / 100 * (H - 2 * pad), a: g.report.accuracy, b: CT.Games.countsOf(g)[g.userColor].blunder }; });
     var path = pts.map(function (p, i) { return (i ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); }).join(' ');
     return '<svg class="trend" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Accuracy over your last games">' +
       [25, 50, 75].map(function (v) { var y = H - pad - v / 100 * (H - 2 * pad); return '<line x1="' + pad + '" x2="' + (W - pad) + '" y1="' + y + '" y2="' + y + '" class="grid"/><text x="2" y="' + (y + 3) + '">' + v + '%</text>'; }).join('') +
@@ -322,7 +322,7 @@
       if (!result) {
         if (job) return;
         panel.innerHTML = '<h2>Analyse this game</h2><p>The engine checks every move (' + g.moves.length + ' half-moves). With Stockfish this usually takes 1–4 minutes; the built-in engine is faster but much weaker.</p>' +
-          '<label class="field">Depth<select class="depth">' + DEPTHS.map(function (d) { return '<option value="' + d[0] + '"' + (d[0] === '12' ? ' selected' : '') + '>' + d[1] + ' (depth ' + d[0] + ')</option>'; }).join('') + '</select></label>' +
+          '<label class="field">Depth<select class="depth">' + DEPTHS.map(function (d) { return '<option value="' + d[0] + '"' + (d[0] === '16' ? ' selected' : '') + '>' + d[1] + ' (depth ' + d[0] + ')</option>'; }).join('') + '</select></label>' +
           '<div class="btn-row"><button class="btn primary" data-act="analyse">Analyse with Stockfish</button><button class="btn" data-act="analyse-builtin">Quick check (built-in engine)</button></div>';
         return;
       }
@@ -371,7 +371,7 @@
     }
 
     function runAnalysis(useStockfish) {
-      var depth = +(panel.querySelector('.depth') ? panel.querySelector('.depth').value : 12);
+      var depth = +(panel.querySelector('.depth') ? panel.querySelector('.depth').value : 16);
       panel.innerHTML = '<h2>Analysing…</h2><p class="muted small an-status">Preparing the engine…</p>' + UI.bar(0) + '<div class="btn-row"><button class="btn" data-act="cancel">Cancel</button></div>';
       var setP = function (i, n) { var b = panel.querySelector('.bar span'); if (b) b.style.width = Math.round(i / n * 100) + '%'; var s = panel.querySelector('.an-status'); if (s) s.textContent = 'Position ' + i + ' of ' + n; };
       CT.Analyzer.pick(useStockfish).then(function (an) {
@@ -382,6 +382,7 @@
       }).then(function (res) {
         job = null;
         CT.Games.saveAnalysis(g.id, res);
+        if (CT.Experiments) CT.Experiments.update().forEach(function (e) { UI.toast(e.kind === 'concluded' ? CT.Experiments.verdictText(e.exp) : '🔬 New experiment: ' + CT.Experiments.label(e.exp.symptom, e.exp.motif).toLowerCase()); });
         g = CT.Games.get(id);
         result = CT.Games.expand(g);
         CT.Sound.play('win');

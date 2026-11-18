@@ -107,23 +107,40 @@
     persist();
   }
 
+  /** Classes are re-derived from the stored loss, so older reviews use today's (chess.com-style) bands too. */
+  function reclass(s) {
+    if (!s || s.cls === 'best') return s && s.cls;
+    var c = CT.Analysis.classify(s.loss || 0);
+    if (s.missedMate && (c === 'good' || c === 'excellent')) c = 'inaccuracy';
+    return c;
+  }
+
+  /** Blunder / mistake / inaccuracy counts per side, using today's bands. */
+  function countsOf(g) {
+    var c = { w: { blunder: 0, mistake: 0, inaccuracy: 0 }, b: { blunder: 0, mistake: 0, inaccuracy: 0 } };
+    if (!g || !g.analysis) return c;
+    var whiteFirst = !g.startFen || g.startFen.split(' ')[1] !== 'b';
+    (g.analysis.moves || []).forEach(function (m, i) { var col = (i % 2 === 0) === whiteFirst ? 'w' : 'b', k = reclass(m); if (c[col][k] !== undefined) c[col][k]++; });
+    return c;
+  }
+
   /** Rebuild the full analysis object (with positions) from what we stored. */
   function expand(g) {
     if (!g.analysis) return null;
     var C = CT.Chess, b = new C(g.startFen), fens = [b.fen()], played = [];
     g.moves.forEach(function (s) { played.push(b.move(s)); fens.push(b.fen()); });
     var a = g.analysis, moves = played.map(function (m, ply) {
-      var s = a.moves[ply] || {}, eb = a.evals[ply], ea = a.evals[ply + 1];
+      var s = a.moves[ply] || {}, eb = a.evals[ply], ea = a.evals[ply + 1], cls = reclass(s);
       var wb = CT.Analysis.winPct(eb), wa = CT.Analysis.winPct(ea);
       return {
         ply: ply, moveNo: Math.floor(ply / 2) + parseInt(fens[0].split(' ')[5] || '1', 10), color: m.color, san: m.san, from: m.from, to: m.to,
         fenBefore: fens[ply], fenAfter: fens[ply + 1], evalBefore: eb, evalAfter: ea, best: eb.best, bestPv: eb.pv,
         winBefore: m.color === 'w' ? wb : 100 - wb, winAfter: m.color === 'w' ? wa : 100 - wa,
-        loss: s.loss || 0, cls: s.cls, symbol: CT.Analysis.SYMBOL[s.cls] || '', explanation: s.explanation, motif: s.motif,
+        loss: s.loss || 0, cls: cls, symbol: CT.Analysis.SYMBOL[cls] || '', explanation: s.explanation, motif: s.motif,
         missedMate: s.missedMate, allowsMate: s.allowsMate, lessonKind: s.lessonKind, reply: ea.best, replyPv: ea.pv
       };
     });
-    return { engine: a.engine, source: a.source, headers: g.headers, startFen: g.startFen, moves: moves, evals: a.evals, accuracy: a.accuracy, counts: a.counts };
+    return { engine: a.engine, source: a.source, headers: g.headers, startFen: g.startFen, moves: moves, evals: a.evals, accuracy: a.accuracy, counts: CT.Analysis.countClasses(moves) };
   }
 
   function compactReport(r) {
@@ -180,7 +197,7 @@
       });
       if (r.missedThreats) threatGames++;
       if (r.hadWinning) conversion++;
-      var c = g.analysis.counts[r.userColor]; blunders += c.blunder;
+      var c = countsOf(g)[r.userColor]; blunders += c.blunder;
     });
     var insights = [];
     // Ranked by total cost (how often × how much it cost), not just by how often it happened.
@@ -202,7 +219,7 @@
     var analysed = games.filter(function (g) { return g.analysis && g.report && g.report.userColor; });
     var perGame = analysed.map(function (g) {
       var whiteFirst = !g.startFen || g.startFen.split(' ')[1] !== 'b', mine = g.report.userColor === 'w' ? (whiteFirst ? 0 : 1) : (whiteFirst ? 1 : 0);
-      return (g.analysis.moves || []).filter(function (m, i) { return i % 2 === mine && m && (m.cls === 'blunder' || m.cls === 'mistake') && m.lessonKind === 'threat' && m.motif && m.motif.key === 'hanging'; }).length;
+      return (g.analysis.moves || []).filter(function (m, i) { return i % 2 === mine && m && (reclass(m) === 'blunder' || reclass(m) === 'mistake') && m.lessonKind === 'threat' && m.motif && m.motif.key === 'hanging'; }).length;
     });
     function per10(list) { return list.length ? Math.round(list.reduce(function (a, b) { return a + b; }, 0) / list.length * 100) / 10 : null; }
     var recent = perGame.slice(0, 10), prev = perGame.slice(10, 20);
@@ -238,7 +255,7 @@
   CT.Games = {
     all: all, replaceAll: replaceAll,
     add: add, get: get, setClocks: setClocks, list: list, remove: remove, setColor: setColor, saveAnalysis: saveAnalysis, expand: expand,
-    patterns: patterns, hungStats: hungStats, themePressure: themePressure, mergeGamePuzzles: mergeGamePuzzles, exportPgn: exportPgn,
+    patterns: patterns, hungStats: hungStats, countsOf: countsOf, themePressure: themePressure, mergeGamePuzzles: mergeGamePuzzles, exportPgn: exportPgn,
     detectColor: detectColor, openingName: openingName
   };
 })(window);

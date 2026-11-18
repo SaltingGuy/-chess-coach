@@ -22,7 +22,7 @@
     }).join('') : '<tr><td colspan="3" class="muted">No training yet.</td></tr>';
     var p = Store.state.profile;
 
-    view.innerHTML = '<header class="page-head"><div><h1>Progress</h1><p class="muted">' + totals.puzzlesSolved + ' puzzles solved · ' + UI.pct(totals.firstTryRate) + ' first-try accuracy · ' + Store.streak() + '-day streak</p></div></header>' + milestonesHtml() + practiceHtml() +
+    view.innerHTML = '<header class="page-head"><div><h1>Progress</h1><p class="muted">' + totals.puzzlesSolved + ' puzzles solved · ' + UI.pct(totals.firstTryRate) + ' first-try accuracy · ' + Store.streak() + '-day streak</p></div></header>' + notebookCard() + milestonesHtml() + practiceHtml() +
       '<section class="grid-2"><div class="card"><h2>Tactics by theme</h2><table class="tbl"><thead><tr><th>Theme</th><th>Tries</th><th>All-time</th><th>Recent</th></tr></thead><tbody>' + themeRows + '</tbody></table></div>' +
       '<div class="card"><h2>Opening lines</h2><table class="tbl"><thead><tr><th>Line</th><th>Status</th><th>Clean</th><th>Next review</th></tr></thead><tbody>' + lineRows + '</tbody></table></div></section>' +
       '<section class="grid-2"><div class="card"><h2>Last 14 days</h2><table class="tbl"><thead><tr><th>Day</th><th>Puzzles right</th><th>Clean drills</th></tr></thead><tbody>' + dayRows + '</tbody></table></div>' +
@@ -165,6 +165,14 @@
         catch (err) { UI.toast(err.message); }
       });
     });
+  }
+
+  function notebookCard() {
+    if (!CT.Experiments) return '';
+    var st = CT.Experiments.status();
+    return '<a class="card nb-link" href="#/progress/notebook"><h2>🔬 Coach\'s notebook</h2><p class="small">' + (st.active ?
+      'Experiment #' + st.active.id + ': ' + CT.UI.esc(st.title) + ' — ' + st.measured + '/' + st.needed + ' new games measured.' :
+      'Your training, run like an experiment on your real games. ' + (st.games < CT.Experiments.MIN_BASE ? 'Starts after ' + CT.Experiments.MIN_BASE + ' analysed games (' + st.games + ' so far).' : 'Waiting for a clear leak.')) + '</p></a>';
   }
 
   function milestonesHtml() {

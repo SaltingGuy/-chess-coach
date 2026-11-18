@@ -50,6 +50,10 @@
       reason: (ownFresh ? ownFresh + ' position' + (ownFresh > 1 ? 's' : '') + ' from your own games' : '') + (ownFresh && dueReviews ? ' and ' : '') +
         (dueReviews ? dueReviews + ' review' + (dueReviews > 1 ? 's' : '') + ' due' : '') + ' — testing yourself on real mistakes, spaced out over days, is the most proven way to learn.' });
 
+    // The Coach's Lab: today's dose of the training method being tested on your biggest leak.
+    var lab = CT.Experiments ? CT.Experiments.sessionBlock(size) : null;
+    if (lab) add(lab);
+
     add({ key: 'focus', icon: '⚔', title: 'Hard focus', href: '#/tactics/focus', counter: 'puzzles', target: [6, 10, 14][size], core: true,
       reason: 'Harder mixed puzzles while you are fresh, theme hidden like a real game' + (weak ? ' — leaning toward ' + weak.name + ', your costliest weakness.' : '.') + ' Do a safety check before every move.',
       alts: [
@@ -87,8 +91,8 @@
         alts: [{ key: 'convert', icon: '♚', title: 'Convert the Win', href: '#/endgames/convert', counter: 'endgames', target: 1, reason: 'You are ahead — bring it home without giving it back.' }] });
     }
     if (size === 2) {
-      var lab = C.nextLab();
-      add({ key: 'lab', icon: '◈', title: 'Deception Lab', href: lab.href, counter: 'lab', target: 1, reason: lab.label + ' — the hidden ideas behind your style.' });
+      var nl = C.nextLab();
+      add({ key: 'lab', icon: '◈', title: 'Deception Lab', href: nl.href, counter: 'lab', target: 1, reason: nl.label + ' — the hidden ideas behind your style.' });
     }
     add({ key: 'finish', icon: '★', title: 'Finish on a win', href: '#/tactics/warmup', counter: 'warmup', target: 1, reason: 'One easy puzzle to end on a success — you will want to come back tomorrow.' });
     return { type: type, blocks: blocks, weak: weak ? weak.name : null };

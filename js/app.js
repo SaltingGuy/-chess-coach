@@ -109,6 +109,7 @@
       else if (p0 === 'practice' && parts[1] === 'play') cleanup = V.practicePlay(view);
       else if (p0 === 'practice') cleanup = V.practice(view);
       else if (p0 === 'progress' && parts[1] === 'test') cleanup = V.skillTest(view, parts[2]);
+      else if (p0 === 'progress' && parts[1] === 'notebook') V.notebook(view);
       else if (p0 === 'progress') V.progress(view);
       else if (PLACEHOLDERS[p0]) V.placeholder(view, PLACEHOLDERS[p0]);
       else view.innerHTML = '<h1>Page not found</h1><p><a href="#/">Go to the dashboard</a></p>';
@@ -129,6 +130,12 @@
     buildNav();
     root.addEventListener('hashchange', route);
     route();
-    if (CT.ChessCom) CT.ChessCom.autoStart();
+    // New chess.com games → analysed in the background → the Coach's Lab updates its experiment.
+    var labTick = function () {
+      if (!CT.Experiments) return;
+      CT.Experiments.update().forEach(function (e) { CT.UI.toast(e.kind === 'concluded' ? CT.Experiments.verdictText(e.exp) : '🔬 New experiment: ' + CT.Experiments.label(e.exp.symptom, e.exp.motif).toLowerCase()); });
+      setTimeout(function () { CT.Experiments.analyseQueue(3, function () { if (/^#\/?$|^$/.test(location.hash)) route(); }); }, 2500);
+    };
+    if (CT.ChessCom) CT.ChessCom.autoStart().then(labTick, labTick); else labTick();
   });
 })(window);
