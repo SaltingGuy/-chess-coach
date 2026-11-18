@@ -1,0 +1,18 @@
+npm package: stockfish@19.0.1 (https://github.com/nmrugg/stockfish.js, GPL-3.0)
+build: stockfish-19-lite-single.js + stockfish-19-lite-single.wasm, renamed to stockfish.js / stockfish.wasm
+sha256:
+ccb130d7ff29408531c47d859a49f91d59d4f482d05a53eb1a3231a4f624c91a  vendor/stockfish/stockfish.js
+ee4f115bdb2d32cadf96cada104a05b5ec257d7ad6f57582190b49bc71f096de  vendor/stockfish/stockfish.wasm
+all files in the package:
+  package/bin/stockfish-19-asm.js
+  package/bin/stockfish-19-lite-single.js
+  package/bin/stockfish-19-lite-single.wasm
+  package/bin/stockfish-19-lite.js
+  package/bin/stockfish-19-lite.wasm
+  package/bin/stockfish-19-single.js
+  package/bin/stockfish-19-single.wasm
+  package/bin/stockfish-19.js
+  package/bin/stockfish-19.wasm
+  package/index.js
+  package/scripts/cli.js
+  package/scripts/findEngine.js
