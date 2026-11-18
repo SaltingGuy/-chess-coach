@@ -41,7 +41,8 @@
     var want = prof().voiceProvider || 'auto';
     // Inside claude.ai (where the Claude voice exists) pages may not contact other websites, so ElevenLabs
     // can only be used when the app is opened from its own copy.
-    if (want === 'elevenlabs' && elevenReady() && !elBroken && !claudeReady()) return 'elevenlabs';
+    // On your own website, "Best available" uses ElevenLabs as soon as you have saved a key.
+    if ((want === 'elevenlabs' || (want === 'auto' && getKey())) && keyReady() && !elBroken && !claudeReady()) return 'elevenlabs';
     if ((want === 'claude' || want === 'auto' || want === 'elevenlabs') && claudeReady()) return 'claude';
     return 'browser';
   }
@@ -87,7 +88,8 @@
   function ls() { try { return root.localStorage; } catch (e) { return null; } }
   function getKey() { var l = ls(); return l ? l.getItem(KEY_STORE) || '' : ''; }
   function setKey(k) { var l = ls(); if (!l) return; k = String(k || '').trim(); if (k) l.setItem(KEY_STORE, k); else l.removeItem(KEY_STORE); elBroken = false; elError = ''; }
-  function elevenReady() { return prof().voiceProvider === 'elevenlabs' && !!getKey() && typeof root.fetch === 'function' && !!root.Audio; }
+  function keyReady() { return !!getKey() && typeof root.fetch === 'function' && !!root.Audio; }
+  function elevenReady() { var w = prof().voiceProvider || 'auto'; return (w === 'elevenlabs' || (w === 'auto' && !claudeReady())) && keyReady(); }
   function monthKey() { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1); }
   function usage() {
     var l = ls(), u = null;

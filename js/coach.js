@@ -126,6 +126,16 @@
       if (band.length) return { puzzle: band[Math.floor(Math.random() * band.length)], reason: 'Warm-up — easier puzzles to get your eye in before you play.', mix: true };
     }
 
+    // "Your own mistakes" (guided session): only due reviews and positions from your own games.
+    if (opts.mine) {
+      var dueMine = pool.filter(function (p) { var r = recs[p.id]; return r && r.due <= now && r.box < 5 && p.family !== lastFamily; })
+        .sort(function (a, b) { return recs[a.id].box - recs[b.id].box || recs[a.id].due - recs[b.id].due; });
+      if (dueMine.length) return { puzzle: dueMine[0], reason: recs[dueMine[0].id].box === 0 ? 'Review: you missed this one before.' : 'Spaced review — keeping it fresh.' };
+      var ownMine = pool.filter(function (p) { return p.source === 'game' && !recs[p.id]; });
+      return ownMine.length ? { puzzle: ownMine[0], reason: 'From your own game — find the move you missed.' } : null;
+    }
+    if (opts.stretch) R += 100; // "Hard focus": a bit above your rating
+
     // 1. Due reviews. If you missed a puzzle and its twin is fresh, test the idea in the twin instead.
     var due = pool.filter(function (p) { var r = recs[p.id]; return r && r.due <= now && r.box < 5 && p.family !== lastFamily; })
       .sort(function (a, b) { return recs[a.id].box - recs[b.id].box || recs[a.id].due - recs[b.id].due; });

@@ -26,6 +26,7 @@
       mastered: {},  // theme -> {at, checkins} — you tested out of it; it only comes back as an occasional check-in
       testouts: {},  // theme -> {attempts, passed, lastAt, lastScore}
       danger: {},    // back-rank danger position id -> {attempts, ok, box, due, lastAt, lastOk}
+      session: null, // today's guided session (see js/session.js)
       ccSync: {},    // chess.com auto-sync: {user, lastAt, lastEndTime, lastAdded, lastError, newIds}
       log: [],       // recent events: {t, kind, id, ok, theme?, ms?, hint?}
       days: {}       // 'YYYY-MM-DD' -> {puzzles, correct, drills, cleanDrills, quiz, quizOk}
@@ -57,6 +58,8 @@
 
   function save() {
     if (state.log.length > 3000) state.log = state.log.slice(-3000);
+    // A running guided session checks after every save whether its current block is done.
+    if (root.CT && root.CT.Session) { try { root.CT.Session.tick(); } catch (e) { /* never block saving */ } }
     try { root.localStorage.setItem(KEY, JSON.stringify(state)); memoryOnly = false; return true; }
     catch (e) { memoryOnly = true; return false; }
   }

@@ -127,7 +127,7 @@
         return wi.next ? { puzzle: wi.next, reason: 'Woodpecker cycle ' + wi.cycle + ' · ' + (wi.solved + 1) + ' of ' + wi.total + (wi.targetMs ? ' · target pace ' + Math.round(wi.targetMs / wi.total / 1000) + 's per puzzle' : ' · accuracy first') } : null;
       }
       if (opts.id) return { puzzle: Coach.puzzleById(opts.id), reason: 'Selected puzzle.' };
-      return Coach.nextPuzzle({ theme: opts.theme, exclude: lastId, allowEarly: !!opts.theme, warmup: !!opts.warmup });
+      return Coach.nextPuzzle({ theme: opts.theme, exclude: lastId, allowEarly: !!opts.theme, warmup: !!opts.warmup, mine: !!opts.mine, stretch: !!opts.stretch });
     }
 
     function load() {
@@ -158,6 +158,14 @@
           (last ? '<p>Cycle ' + last.cycle + ': <strong>' + Math.round(last.accuracy * 100) + '%</strong> correct in <strong>' + Math.round(last.ms / 60000) + ' min</strong>.</p>' : '') +
           '<p>The Woodpecker method works best with a day of rest between cycles. Next cycle, aim for about half the time with the same accuracy.</p>' +
           '<div class="btn-row"><a class="btn primary" href="#/tactics/woodpecker">Woodpecker overview</a><a class="btn" href="#/tactics/train">Daily Mix</a></div>';
+        return;
+      }
+      if (opts.mine) {
+        panel.innerHTML = '<h2>No more due</h2><p>None of your own mistakes or reviews are due right now — they come back on a schedule so they stick.</p>' +
+          (sessionCount ? '<p>This block: <strong>' + sessionOk + '/' + sessionCount + '</strong> right first time.</p>' : '') +
+          (CT.Session && CT.Session.active() ? '<div class="btn-row"><button class="btn primary" data-act="session-next">Next block ▶</button></div>' : '<div class="btn-row"><a class="btn primary" href="#/tactics/train">Daily Mix</a></div>');
+        var nb = panel.querySelector('[data-act="session-next"]');
+        if (nb) nb.addEventListener('click', function () { CT.Session.next(true); });
         return;
       }
       panel.innerHTML = '<h2>All caught up</h2><p>You have no puzzles due right now' + (opts.theme ? ' in this theme' : '') + '. Missed puzzles come back after a short break (often as a mirrored twin — same idea, new position), and solved ones come back days later so they stick.</p>' +

@@ -91,6 +91,7 @@
   function saveAnalysis(id, result) {
     var g = get(id);
     if (!g) return;
+    if (!g.analysis && CT.Store) CT.Store.bumpDay('analysed'); // a newly reviewed game (guided session "Review" block)
     g.analysis = {
       engine: result.engine, source: result.source, at: Date.now(), accuracy: result.accuracy, counts: result.counts,
       evals: result.evals.map(compactEval),
@@ -193,6 +194,21 @@
   }
   function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : s; }
 
+  /**
+   * "Hope chess" check: how often YOUR move left a piece hanging (a mistake or blunder whose punishment is
+   * simply taking a free piece). Per 10 games: your last 10 analysed games vs the 10 before.
+   */
+  function hungStats() {
+    var analysed = games.filter(function (g) { return g.analysis && g.report && g.report.userColor; });
+    var perGame = analysed.map(function (g) {
+      var whiteFirst = !g.startFen || g.startFen.split(' ')[1] !== 'b', mine = g.report.userColor === 'w' ? (whiteFirst ? 0 : 1) : (whiteFirst ? 1 : 0);
+      return (g.analysis.moves || []).filter(function (m, i) { return i % 2 === mine && m && (m.cls === 'blunder' || m.cls === 'mistake') && m.lessonKind === 'threat' && m.motif && m.motif.key === 'hanging'; }).length;
+    });
+    function per10(list) { return list.length ? Math.round(list.reduce(function (a, b) { return a + b; }, 0) / list.length * 100) / 10 : null; }
+    var recent = perGame.slice(0, 10), prev = perGame.slice(10, 20);
+    return { games: perGame.length, recent: per10(recent), previous: prev.length >= 3 ? per10(prev) : null, perGame: perGame };
+  }
+
   /** Theme weights for the coach: themes linked to recurring game mistakes get priority. */
   function themePressure() {
     var p = patterns(10), out = {};
@@ -222,7 +238,7 @@
   CT.Games = {
     all: all, replaceAll: replaceAll,
     add: add, get: get, setClocks: setClocks, list: list, remove: remove, setColor: setColor, saveAnalysis: saveAnalysis, expand: expand,
-    patterns: patterns, themePressure: themePressure, mergeGamePuzzles: mergeGamePuzzles, exportPgn: exportPgn,
+    patterns: patterns, hungStats: hungStats, themePressure: themePressure, mergeGamePuzzles: mergeGamePuzzles, exportPgn: exportPgn,
     detectColor: detectColor, openingName: openingName
   };
 })(window);

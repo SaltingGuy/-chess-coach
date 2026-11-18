@@ -67,6 +67,7 @@
     var view = document.createElement('div');
     view.className = 'view';
     main.innerHTML = '';
+    if (CT.Session) main.appendChild(CT.Session.barEl()); // the guided-session bar sits above every screen
     main.appendChild(view);
     document.querySelectorAll('.sidebar nav a, .tabbar a').forEach(function (a) {
       var n = NAV.find(function (x) { return x.href === a.getAttribute('href'); });
@@ -83,6 +84,9 @@
       else if (p0 === 'tactics' && parts[1] === 'woodpecker' && parts[2] === 'go') cleanup = V.tacticsTrainer(view, { woodpecker: true });
       else if (p0 === 'tactics' && parts[1] === 'woodpecker') V.woodpecker(view);
       else if (p0 === 'tactics' && parts[1] === 'warmup') cleanup = V.tacticsTrainer(view, { warmup: true });
+      else if (p0 === 'tactics' && parts[1] === 'mine') cleanup = V.tacticsTrainer(view, { mine: true });
+      else if (p0 === 'tactics' && parts[1] === 'focus') cleanup = V.tacticsTrainer(view, { stretch: true });
+      else if (p0 === 'session') V.session(view);
       else if (p0 === 'tactics' && parts[1] === 'train') cleanup = V.tacticsTrainer(view, { theme: parts[2] || null });
       else if (p0 === 'tactics' && parts[1] === 'p') cleanup = V.tacticsTrainer(view, { id: parts[2] });
       else if (p0 === 'tactics' && parts[1] === 'theme') V.tacticsTheme(view, parts[2]);
@@ -113,6 +117,7 @@
       view.innerHTML = '<div class="warnbox"><h2>Something went wrong</h2><p>' + CT.UI.esc(err.message) + '</p><p><a href="#/">Back to the dashboard</a></p></div>';
     }
     renderToggles();
+    if (CT.Session) CT.Session.renderBar();
     main.scrollTop = 0; root.scrollTo(0, 0);
     if (typeof cleanup !== 'function') cleanup = null;
   }

@@ -8,6 +8,14 @@
     return '<div class="ring-card"><div class="ring" style="--p:' + Math.round(v * 100) + ';--c:' + (color || 'var(--teal)') + '"><span>' + label + '</span></div><small>' + sub + '</small></div>';
   }
 
+  /** Pieces left hanging per 10 games (from your analysed games) — the number Safety check should push down. */
+  function hungHtml() {
+    var h = CT.Games && CT.Games.hungStats ? CT.Games.hungStats() : null;
+    if (!h || h.games < 3) return '<p class="small muted mt">Pieces you hang per 10 games will show here once 3 of your games are analysed.</p>';
+    var trend = h.previous == null ? '' : h.recent < h.previous ? ' <span class="good">↓ from ' + h.previous + '</span>' : h.recent > h.previous ? ' <span class="bad">↑ from ' + h.previous + '</span>' : ' (same as before)';
+    return '<p class="mt hung-stat"><strong>' + h.recent + '</strong> pieces hung per 10 games' + trend + '<br><span class="small muted">Your last ' + Math.min(10, h.games) + ' analysed games. Safety check before every move pushes this down.</span></p>';
+  }
+
   function render(view) {
     var Store = CT.Store, Coach = CT.Coach, D = CT.Data;
     var plan = Coach.dailyPlan(), totals = Store.totals(), tier = Coach.tierInfo();
@@ -18,6 +26,8 @@
     var hour = new Date().getHours();
     var greet = hour < 5 ? 'Late-night training' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
     var streak = Store.streak();
+    var live = CT.Session ? CT.Session.active() : null, ss = Store.state.session;
+    var sessionLabel = live ? 'Resume training ▶' : (ss && ss.finished && ss.day === Store.dayKey(Date.now()) ? '✓ Today\'s session done — see it' : 'Start today\'s training ▶');
     var newGames = CT.ChessCom ? CT.ChessCom.pending() : [];
     var ccBanner = newGames.length ? '<a class="card cc-banner" href="#/analysis/games"><strong>📥 ' + newGames.length + ' new chess.com game' + (newGames.length > 1 ? 's' : '') + '</strong><span class="small muted">Review them — your mistakes become tomorrow\'s training.</span><span class="btn small primary">Review</span></a>' : '';
 
@@ -25,8 +35,6 @@
       var locked = it.needs === 'game' && !(Store.today().games);
       return { icon: it.icon, title: it.title, sub: it.sub + (it.mins ? ' · ~' + it.mins + ' min' : ''), p: it.target ? it.done / it.target : 0, href: it.href, cta: locked ? 'After the game' : it.cta, locked: locked };
     });
-    var firstOpen = plan.items.filter(function (it) { return it.done < it.target && !(it.needs === 'game' && !Store.today().games); })[0];
-    var firstHref = firstOpen ? firstOpen.href : '#/tactics/train';
     var dayHead = '<div class="day-type"><span class="chip on">' + (plan.type === 'play' ? '♟ Play day' : '📘 Study day') + '</span>' +
       '<span class="small muted">' + (plan.type === 'play' ? 'Warm up, play one serious game, then learn from it.' : 'Tactics, endgames and traps — no game needed today.') + '</span>' +
       '<button class="btn small" data-act="swap-day">Switch to ' + (plan.type === 'play' ? 'Study' : 'Play') + ' day</button></div>';
@@ -68,7 +76,7 @@
       '<section class="hero">' +
         '<div class="hero-text"><p class="eyebrow">' + greet + '</p><h1>Train like a trickster —<br>calculate like a defender.</h1>' +
         '<p class="muted">Rating ~' + rating + ' · ' + (ms.current ? 'Milestone reached: <strong>' + ms.current.m.rating + '</strong>' : 'No milestone reached yet') + (nextM ? ' → working toward <strong>' + nextM.m.rating + '</strong> (' + nextM.done + '/' + nextM.total + ')' : '') + ' · Tactics tier ' + tier.tier + ' · ' + plan.minutes + '-minute session</p>' +
-        '<div class="btn-row"><a class="btn primary big" href="' + firstHref + '">Start today\'s training</a><a class="btn big" href="#/lab/threats">Hidden-threat drill</a></div></div>' +
+        '<div class="btn-row"><a class="btn primary big" href="#/session">' + sessionLabel + '</a><a class="btn big" href="#/lab/threats">Hidden-threat drill</a></div></div>' +
         '<div class="hero-rings">' +
           ring(totals.firstTryRate, UI.pct(totals.firstTryRate), 'tactics accuracy', 'var(--teal)') +
           ring(lines.length ? learned / lines.length : 0, learned + '/' + lines.length, 'opening lines', 'var(--accent)') +
@@ -76,10 +84,11 @@
         '</div>' +
       '</section>' +
       '<section class="grid-2">' +
-        '<div class="card"><div class="row-between"><h2>Today\'s plan</h2><span class="small muted">' + plan.minutes + ' min</span></div>' + dayHead + planHtml +
+        '<div class="card"><div class="row-between"><h2>Today\'s plan</h2><span class="small muted">' + plan.minutes + ' min</span></div>' + dayHead +
+          '<a class="btn primary plan-all" href="#/session">' + (live ? 'Resume the guided session ▶' : '▶ Do it all as one guided session') + '</a>' + planHtml +
           '<a class="plan-row" href="#/analysis"><span class="plan-ico">⌕</span><span class="plan-main"><strong>Review a real game</strong><small>Played a rapid game on chess.com? Paste it here for a coach report.</small></span><span class="btn small">Analyse</span></a></div>' +
         '<div class="card"><h2>Last 14 days</h2>' + chart +
-          '<h3 class="mt">Weak spots</h3><div class="chips">' + weak + '</div>' +
+          '<h3 class="mt">Weak spots</h3><div class="chips">' + weak + '</div>' + hungHtml() +
           '<h3 class="mt">Tier progress</h3><p class="small">' + (tier.tier < 4 ? esc(tier.need) + ' <span class="muted">Now ' + UI.pct(tier.recentAtTier ? tier.accuracyAtTier : null) + ' over ' + tier.recentAtTier + '.</span>' : 'All four tactical tiers unlocked.') + '</p></div>' +
       '</section>' +
       insightsCard() +

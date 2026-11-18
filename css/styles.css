@@ -439,3 +439,26 @@ label.check { display: flex; gap: .5rem; align-items: center; margin: .6rem 0 .2
 label.check input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
 .cc-banner { display: flex; flex-wrap: wrap; gap: .4rem .8rem; align-items: center; justify-content: space-between; text-decoration: none; color: inherit; margin-bottom: 1rem; border-left: 4px solid var(--accent); }
 .cc-banner .small { flex: 1 1 14rem; }
+
+/* guided session */
+.session-bar { position: sticky; top: 0; z-index: 30; background: var(--surface2); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: var(--radius); padding: .55rem .75rem; margin: 0 0 .9rem; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+.session-bar[hidden] { display: none; }
+.sb-top { display: flex; align-items: center; gap: .6rem; }
+.sb-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-prog { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; }
+.sb-more { background: none; border: 0; color: var(--text); font-size: 1.4rem; line-height: 1; padding: 0 .3rem; cursor: pointer; }
+.sb-dots { display: flex; gap: 3px; }
+.sb-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+.sb-dots i.d { background: var(--good); } .sb-dots i.c { background: var(--accent); } .sb-dots i.s { background: var(--muted); opacity: .5; }
+.sb-why { color: var(--muted); margin-top: .25rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sb-menu { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+.sb-menu[hidden] { display: none; }
+.sb-next { display: block; width: 100%; margin-top: .55rem; text-align: center; }
+.plan-all { display: block; text-align: center; margin: .6rem 0 .8rem; }
+.session-list { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .5rem; }
+.session-list li { display: flex; gap: .7rem; align-items: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: .6rem .75rem; }
+.session-list li small { display: block; color: var(--muted); margin-top: .15rem; }
+.session-list li.done { opacity: .7; } .session-list li.skipped { opacity: .45; } .session-list li.current { border-color: var(--accent); }
+.len-chips { margin: .8rem 0; }
+.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; text-align: center; }
+.stat-row strong { display: block; font-size: 1.3rem; } .stat-row small { color: var(--muted); }
