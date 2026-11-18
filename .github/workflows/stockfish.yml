@@ -1,0 +1,55 @@
+# Downloads a modern Stockfish (lite NNUE, single-threaded WebAssembly build by nmrugg, GPL-3.0)
+# into vendor/stockfish/, where the app looks for it first. Runs when this file or
+# vendor/stockfish/VERSION changes, or by hand from the Actions tab.
+name: Bundle Stockfish
+on:
+  push:
+    paths: ['.github/workflows/stockfish.yml', 'vendor/stockfish/VERSION']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Download Stockfish
+        run: |
+          set -euo pipefail
+          VER=$(tr -d ' \n' < vendor/stockfish/VERSION 2>/dev/null || echo latest)
+          mkdir -p /tmp/sf && cd /tmp/sf
+          npm pack "stockfish@${VER}"
+          tar -xzf stockfish-*.tgz
+          find package -type f \( -name '*.js' -o -name '*.wasm' \) | sort > files.txt
+          cat files.txt
+          JS=$(grep -i 'lite-single' files.txt | grep '\.js$' | head -1)
+          WASM="${JS%.js}.wasm"
+          if [ -z "$JS" ] || [ ! -f "$WASM" ]; then echo "No lite single-threaded build found"; exit 1; fi
+          cd "$GITHUB_WORKSPACE"
+          cp "/tmp/sf/$JS" vendor/stockfish/stockfish.js
+          cp "/tmp/sf/$WASM" vendor/stockfish/stockfish.wasm
+          for f in Copying.txt COPYING LICENSE license.txt; do [ -f "/tmp/sf/package/$f" ] && cp "/tmp/sf/package/$f" vendor/stockfish/LICENSE.txt && break; done
+          PKGVER=$(node -p "require('/tmp/sf/package/package.json').version")
+          {
+            echo "npm package: stockfish@${PKGVER} (https://github.com/nmrugg/stockfish.js, GPL-3.0)"
+            echo "build: $(basename "$JS") + $(basename "$WASM"), renamed to stockfish.js / stockfish.wasm"
+            echo "sha256:"; sha256sum vendor/stockfish/stockfish.js vendor/stockfish/stockfish.wasm
+            echo "all files in the package:"; sed 's/^/  /' /tmp/sf/files.txt
+          } > vendor/stockfish/SOURCE.txt
+          cat vendor/stockfish/SOURCE.txt
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add vendor/stockfish
+          if git diff --cached --quiet; then echo "No change"; exit 0; fi
+          git commit -m "Bundle Stockfish (lite NNUE, single-threaded)"
+          git push
+      - name: Rebuild the website
+        run: |
+          curl -sS -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pages/builds" || true
