@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1318">
+  <title>Chess Trainer — Personal Coach</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Chess Coach">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <a class="brand" href="#/"><span class="logo">♞</span><span>Chess Trainer<small>Deceptive tactics coach</small></span></a>
+      <nav></nav>
+      <div class="toggles"></div>
+      <p class="side-foot">Training+ · progress saves in this browser</p>
+    </aside>
+    <main id="main"></main>
+  </div>
+  <nav class="tabbar" aria-label="Main"></nav>
+  <div class="more-sheet"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <noscript><p style="padding:2rem">Chess Trainer needs JavaScript turned on.</p></noscript>
+
+  <script src="js/chess.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/engine-play.js"></script>
+  <script src="js/engineworker.js"></script>
+  <script src="js/stockfish.js"></script>
+  <script src="js/pieces.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/voice.js"></script>
+  <script src="js/data/puzzles.js"></script>
+  <script src="js/data/puzzlepack.js"></script>
+  <script src="js/pack.js"></script>
+  <script src="js/data/openings.js"></script>
+  <script src="js/data/deception.js"></script>
+  <script src="js/data/backrank-danger.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/annotate.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/coach.js"></script>
+  <script src="js/openingtree.js"></script>
+  <script src="js/analysis.js"></script>
+  <script src="js/gamestore.js"></script>
+  <script src="js/timeuse.js"></script>
+  <script src="js/enginecheck.js"></script>
+  <script src="js/opponent.js"></script>
+  <script src="js/safety.js"></script>
+  <script src="js/tablebase.js"></script>
+  <script src="js/endgame.js"></script>
+  <script src="js/milestones.js"></script>
+  <script src="js/board.js"></script>
+  <script src="js/views/dashboard.js"></script>
+  <script src="js/views/openings.js"></script>
+  <script src="js/views/openingtools.js"></script>
+  <script src="js/views/tactics.js"></script>
+  <script src="js/views/freeboard.js"></script>
+  <script src="js/views/lab.js"></script>
+  <script src="js/views/analysis.js"></script>
+  <script src="js/views/progress.js"></script>
+  <script src="js/views/practice.js"></script>
+  <script src="js/views/skilltest.js"></script>
+  <script src="js/views/danger.js"></script>
+  <script src="js/chesscom.js"></script>
+  <script src="js/views/endgames.js"></script>
+  <script src="js/trapdrills.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
