@@ -1,0 +1,45 @@
+# Builds js/data/puzzlepack2.js: thousands more (and harder) puzzles from the Lichess puzzle database
+# (https://database.lichess.org, CC0 public domain). Every puzzle is replayed with the app's own rules
+# engine; mate puzzles must end in checkmate. Runs when the selection script or this file changes,
+# or by hand from the Actions tab.
+name: Build puzzle pack 2
+on:
+  push:
+    paths: ['.github/workflows/puzzles.yml', 'scripts/select-puzzles-2.py', 'scripts/build-puzzlepack.js']
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Download the Lichess puzzle database
+        run: |
+          set -euo pipefail
+          curl -sSL --retry 3 -o /tmp/puzzles.csv.zst https://database.lichess.org/lichess_db_puzzle.csv.zst
+          ls -la /tmp/puzzles.csv.zst
+          zstdcat /tmp/puzzles.csv.zst | head -2
+      - name: Select and verify
+        run: |
+          set -euo pipefail
+          zstdcat /tmp/puzzles.csv.zst | python3 scripts/select-puzzles-2.py js/data/puzzlepack.js 2>&1 | tee /tmp/select.log
+          node scripts/build-puzzlepack.js selected2.json js/data/puzzlepack2.js pack2 | tee /tmp/build.log
+          { echo "Built $(date -u +%Y-%m-%d) from lichess_db_puzzle.csv.zst"; cat /tmp/select.log /tmp/build.log; } > js/data/puzzlepack2.txt
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add js/data/puzzlepack2.js js/data/puzzlepack2.txt
+          if git diff --cached --quiet; then echo "No change"; exit 0; fi
+          git commit -m "Puzzle pack 2 from the Lichess puzzle database (CC0)"
+          git push
+      - name: Rebuild the website
+        run: |
+          curl -sS -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pages/builds" || true
