@@ -470,3 +470,18 @@ label.check input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); 
 .nb-hist { list-style: none; padding: 0; display: grid; gap: .6rem; }
 .exp-card { border-left: 4px solid var(--teal); }
 .nb-link { display: block; color: inherit; border-left: 4px solid var(--teal); }
+
+/* Think-First */
+.think-call { background: var(--surface2); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: var(--radius); padding: .7rem .85rem; margin: 0 0 1rem; }
+.reason-chips { display: flex; flex-wrap: wrap; gap: .45rem; margin: .6rem 0; }
+.reason-chips .chip { font-size: .95rem; padding: .5rem .75rem; }
+.arrow-key { display: inline-block; width: 1.1rem; height: .3rem; border-radius: 2px; margin-right: .4rem; vertical-align: middle; }
+.arrow-key.red { background: #e5534b; } .arrow-key.green { background: #57ab5a; }
+.why-row { display: flex; justify-content: space-between; margin-top: .5rem; font-size: .92rem; }
+
+/* Dashboard tidy-up, Tilt Guard, Trap Payoff */
+.session-preview { margin-top: .5rem; letter-spacing: .05em; }
+.more-stats { margin-top: 1rem; }
+.more-stats > summary { cursor: pointer; color: var(--muted); padding: .6rem 0; font-weight: 600; }
+.tilt-banner { border-left-color: #6cb6ff; }
+.payoff-table td:nth-child(n+2), .payoff-table th:nth-child(n+2) { text-align: center; }

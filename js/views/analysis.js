@@ -344,7 +344,9 @@
       var big = M(rep.biggestMistake), opp = M(rep.opponentMistake), miss = M(rep.missedOpportunity);
       var ex = rep.exercises.map(function (id) { return CT.Coach.puzzleById(id); }).filter(Boolean);
       var ann = function (t, m) { return CT.Annotate.annotate(t || '', m ? m.fenBefore : null).html; };
-      return '<ol class="report">' +
+      var think = CT.Think && !CT.Think.done(g.id) && CT.Think.moments(g).length ?
+        '<div class="think-call"><strong>🧠 Think first?</strong> Before reading the engine\'s verdict, replay your ' + CT.Think.moments(g).length + ' turning point' + (CT.Think.moments(g).length > 1 ? 's' : '') + ' and find the better move yourself — it sticks far better.<div class="btn-row"><a class="btn primary small" href="#/analysis/think/' + g.id + '">Think first ▶</a></div></div>' : '';
+      return think + '<ol class="report">' +
         '<li><h3>Summary</h3><p>' + esc(rep.summary) + '</p><div class="acc-row"><span>You <b>' + Math.round(rep.accuracy || 0) + '%</b></span><span>Opponent <b>' + Math.round(rep.oppAccuracy || 0) + '%</b></span></div></li>' +
         '<li><h3>Your biggest mistake</h3>' + (big ? '<p><strong>' + esc(moveName(big)) + '</strong> ' + ann(big.explanation, big) + '</p>' + moveLink(big) : '<p>No real mistakes — excellent.</p>') + '</li>' +
         '<li><h3>Your opponent\'s biggest mistake</h3>' + (opp ? '<p><strong>' + esc(moveName(opp)) + '</strong> ' + ann(opp.explanation, opp) + '</p>' + moveLink(opp) : '<p>Your opponent played cleanly.</p>') + '</li>' +

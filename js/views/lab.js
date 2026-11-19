@@ -42,6 +42,7 @@
         '<a class="card lab-tile" href="#/tactics/theme/decoy"><span class="lab-ico">♛</span><h3>Sacrifices & decoys</h3><p class="small muted">Give material to drag a piece onto a fatal square.</p></a>' +
       '</section>' +
       attackChecklist() +
+      payoffHtml() +
       '<section class="card" id="trap-library"><div class="row-between wrap"><h2>Trap library</h2><input type="search" class="trap-search" placeholder="Search: mate, Caro, queen, pin…" aria-label="Search traps"></div>' +
       '<div class="chips">' + ['all', 'sound', 'conditional', 'unsound', 'punish'].map(function (f, i) { return '<button class="chip' + (i === 0 ? ' on' : '') + '" data-filter="' + f + '">' + (f === 'all' ? 'All' : f === 'punish' ? 'Punish a mistake' : SOUND[f][0]) + '</button>'; }).join('') + '</div>' +
       '<p class="small muted legend"><strong>Sound</strong> — costs you nothing if refused · <strong>Conditional</strong> — only works after an opponent error · <strong>Unsound</strong> — know it so you don\'t fall for it (or play it)</p>' +
@@ -194,6 +195,23 @@
   }
 
   function trapLesson(view, id) { return CT.Views.openingLesson(view, id, 'learn'); }
+
+  /** Trap Payoff: which traps came up in your real games, who fell for them, and whether you punished them. */
+  function payoffHtml() {
+    if (!CT.Insights) return '';
+    var rows = CT.Insights.trapPayoff(), esc = CT.UI.esc;
+    var games = CT.Experiments ? CT.Experiments.realGames().length : 0;
+    if (!rows.length) return '<section class="card"><h2>🎯 Trap Payoff</h2><p class="small muted">Which of your traps actually come up in your real games — and who falls for them. ' + (games ? 'None of the ' + games + ' analysed games reached a trap position yet.' : 'Appears once your chess.com games are imported and analysed.') + '</p></section>';
+    var set = rows.filter(function (r) { return r.drill.mode === 'punish'; }), against = rows.filter(function (r) { return r.drill.mode === 'avoid'; });
+    var tbl = function (list, cols) {
+      return '<table class="nb-table payoff-table"><thead><tr><th>Trap</th>' + cols.map(function (c) { return '<th>' + c + '</th>'; }).join('') + '</tr></thead><tbody>' + list.map(function (r) {
+        return '<tr><td><a href="#/lab/drill/' + r.drill.id + '">' + esc(r.drill.name) + '</a></td><td>' + r.reached + '</td><td>' + r.fell + '</td>' + (cols.length > 2 ? '<td>' + r.punished + '</td>' : '') + '</tr>';
+      }).join('') + '</tbody></table>';
+    };
+    return '<section class="card"><h2>🎯 Trap Payoff</h2><p class="small muted">From your ' + games + ' analysed real games. Drills for traps that come up — or that caught you — are served first.</p>' +
+      (set.length ? '<h3 class="mt">Your traps</h3>' + tbl(set, ['came up', 'they fell', 'you punished']) : '') +
+      (against.length ? '<h3 class="mt">Traps set against you</h3>' + tbl(against, ['came up', 'you fell']) : '') + '</section>';
+  }
 
   CT.Views = CT.Views || {};
   CT.Views.lab = hub;

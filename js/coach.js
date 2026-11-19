@@ -126,6 +126,16 @@
       if (band.length) return { puzzle: band[Math.floor(Math.random() * band.length)], reason: 'Warm-up — easier puzzles to get your eye in before you play.', mix: true };
     }
 
+    // "Same idea, new position": a fresh puzzle with the motif you got wrong in a game, 3 days after Think-First.
+    if (!opts.theme && !opts.warmup && CT.Think) {
+      var tc = CT.Think.dueTransfer()[0];
+      if (tc) {
+        var cand = D.puzzles.filter(function (p) { return p.theme === tc.theme && !recs[p.id] && !p.woodpecker && p.source !== 'game' && !isExample(p); })
+          .sort(function (a, b) { return Math.abs(Store.puzzleRatingOf(a) - R) - Math.abs(Store.puzzleRatingOf(b) - R); })[0];
+        if (cand) { tc.served = cand.id; return { puzzle: cand, reason: 'Same idea as your move ' + tc.from.moveNo + ' (' + tc.from.san + ') vs ' + (tc.from.opp || 'your opponent') + ' — a new position.', transfer: true }; }
+        tc.done = true; // nothing left in that theme
+      }
+    }
     // "Your own mistakes" (guided session): only due reviews and positions from your own games.
     if (opts.mine) {
       var dueMine = pool.filter(function (p) { var r = recs[p.id]; return r && r.due <= now && r.box < 5 && p.family !== lastFamily; })

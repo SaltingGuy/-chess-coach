@@ -82,6 +82,12 @@
     var list = all(), r = recs(), now = Date.now();
     var due = list.filter(function (d) { return r[d.id] && r[d.id].due <= now; }).sort(function (a, b) { return r[a.id].box - r[b.id].box; })[0];
     if (due) return { drill: due, href: '#/lab/drill/' + due.id, label: 'Review: ' + (due.mode === 'punish' ? 'punish ' : 'avoid ') + due.name };
+    // Trap Payoff: traps that actually come up in your real games (or that you fell for) before the rest.
+    if (CT.Insights) {
+      var pr = CT.Insights.trapPriorities().filter(function (x) { var rr = r[x.id]; return !rr || rr.due <= now || (rr.lastAt || 0) < now - 7 * 86400000; })[0];
+      var pd = pr && list.filter(function (d) { return d.id === pr.id; })[0];
+      if (pd) return { drill: pd, href: '#/lab/drill/' + pd.id, label: (pd.mode === 'punish' ? 'Punish it: ' : 'Avoid it: ') + pd.name + ' — ' + pr.why };
+    }
     var fresh = list.filter(function (d) { return !r[d.id]; }).sort(function (a, b) { return (b.repertoire ? 1 : 0) - (a.repertoire ? 1 : 0); })[0];
     if (fresh) return { drill: fresh, href: '#/lab/drill/' + fresh.id, label: (fresh.mode === 'punish' ? 'Punish it: ' : 'Avoid it: ') + fresh.name };
     return null;

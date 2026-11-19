@@ -32,7 +32,8 @@
         '<button class="btn" data-act="savesettings">Save settings</button>' +
         '<h3 class="mt">Board &amp; sound</h3><div class="toggles inline"></div>' +
         '<h3 class="mt">Voice coach</h3><div class="voice-box"></div>' +
-        '<h3 class="mt">Backup</h3><p class="small muted">Progress is stored in this browser only. Download a backup (training progress and your saved games) to move it to another device (for example from your Chromebook to your phone).</p>' +
+        '<h3 class="mt" id="sync">Keep your progress safe</h3>' + syncHtml() +
+        '<h4 class="mt">Backup file</h4><p class="small muted">Download a backup (training progress and your saved games) to keep it safe or move it to another device.</p>' +
         '<div class="btn-row"><button class="btn" data-act="export">Download backup</button><button class="btn" data-act="copybackup">Copy backup text</button><label class="btn file-btn">Restore from file<input type="file" accept=".json,application/json" class="restore" hidden></label></div>' +
         '<details class="tool"><summary>Restore by pasting backup text</summary><textarea class="paste-backup" rows="4" spellcheck="false" placeholder="Paste the backup text here"></textarea><div class="btn-row"><button class="btn small" data-act="pasterestore">Restore</button></div></details>' +
         '<h3 class="mt">Reset</h3><div class="reset-zone"><button class="btn danger" data-act="reset">Erase all progress…</button></div>' +
@@ -51,8 +52,24 @@
         Store.save(); UI.toast('Settings saved'); CT.App.rerender();
       }
       if (a === 'voicetest') CT.Voice.say('Knight to f3. Before every move, ask: what does my opponent threaten?', { force: true });
-      if (a === 'export') UI.download('chess-trainer-backup-' + Store.dayKey() + '.json', Store.exportJSON(), 'application/json');
-      if (a === 'copybackup') UI.copy(Store.exportJSON());
+      if (a === 'export') { UI.download('chess-trainer-backup-' + Store.dayKey() + '.json', Store.exportJSON(), 'application/json'); if (CT.Sync) CT.Sync.markBackedUp(); }
+      if (a === 'copybackup') { UI.copy(Store.exportJSON()); if (CT.Sync) CT.Sync.markBackedUp(); }
+      if (a === 'sync-connect' || a === 'sync-now') {
+        var out = view.querySelector('.sync-status');
+        var go = a === 'sync-now' ? CT.Sync.sync() : (function () {
+          var tok = view.querySelector('.sync-token').value.trim(), repo = view.querySelector('.sync-repo').value.trim();
+          if (!tok || !repo) { out.textContent = 'Paste the token and the repository name first.'; return null; }
+          return CT.Sync.connect(tok, repo);
+        })();
+        if (!go) return;
+        b.disabled = true; out.textContent = 'Contacting GitHub…';
+        go.then(function (r) {
+          b.disabled = false;
+          if (r && r.ok) { UI.toast(r.pulled ? '✓ Synced — progress from your other device merged in' : '✓ Synced — your progress is saved in GitHub'); CT.App.rerender(); }
+          else out.textContent = (r && r.error) || CT.Sync.statusText();
+        }).catch(function (err) { b.disabled = false; out.textContent = err.message; });
+      }
+      if (a === 'sync-off') { CT.Sync.disconnect(); UI.toast('Sync turned off on this device'); CT.App.rerender(); }
       if (a === 'pasterestore') {
         try { Store.importJSON(view.querySelector('.paste-backup').value); UI.toast('Backup restored'); CT.App.rerender(); }
         catch (err) { UI.toast(err.message.indexOf('JSON') >= 0 ? 'That text is not a valid backup.' : err.message); }
@@ -165,6 +182,27 @@
         catch (err) { UI.toast(err.message); }
       });
     });
+  }
+
+  /** Persistent storage + optional sync through the user's own private GitHub repository. */
+  function syncHtml() {
+    if (!CT.Sync) return '';
+    var p = CT.Store.state.profile, esc = CT.UI.esc;
+    var keep = p.persisted ? '<p class="small good">✓ This browser has agreed to keep the app\'s data.</p>' :
+      '<p class="small muted">Your progress lives in this browser. Some browsers (Safari especially) can clear a website\'s data after a week without a visit — opening the app from its home-screen icon, and backing up or syncing, protects it.</p>';
+    if (CT.Sync.configured()) {
+      return keep + '<p class="small">🔄 <strong>Sync is on</strong> — progress and games are saved to your private GitHub repository <strong>' + esc(p.syncRepo) + '</strong> and merged with your other devices (on start, and when you leave the app).</p>' +
+        '<p class="small muted sync-status">' + esc(CT.Sync.statusText()) + '</p><div class="btn-row"><button class="btn primary" data-act="sync-now">Sync now</button><button class="btn" data-act="sync-off">Turn off on this device</button></div>';
+    }
+    return keep + '<details class="tool"' + (location.hash.indexOf('sync') >= 0 ? ' open' : '') + '><summary>🔄 Sync phone + Chromebook (free, through your GitHub)</summary><div class="small">' +
+      '<p>Your progress and games are saved in a <strong>private</strong> repository of yours, and every device merges its training with it — so work on the phone and on the Chromebook adds up. No one else is involved.</p>' +
+      '<ol><li>On github.com: <strong>+ → New repository</strong>, name it <code>chess-coach-data</code>, choose <strong>Private</strong>, <strong>Create</strong>.</li>' +
+      '<li>Profile picture → <strong>Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token</strong>. Name: Chess Coach sync. Expiration: 1 year. <strong>Repository access: Only select repositories → chess-coach-data</strong>. <strong>Permissions → Repository permissions → Contents: Read and write</strong>. Generate, then copy the token.</li>' +
+      '<li>Paste it below and connect. Do the same on your other device (same repository, same or a second token).</li></ol>' +
+      '<p class="muted">The token can only touch that one repository. It is kept on this device only, never in backups. Never paste it into a chat.</p></div>' +
+      '<label class="field">Repository<input class="sync-repo" value="chess-coach-data" autocomplete="off" spellcheck="false"></label>' +
+      '<label class="field">Token<input class="sync-token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…"></label>' +
+      '<div class="btn-row"><button class="btn primary" data-act="sync-connect">Connect and sync</button></div><p class="small muted sync-status"></p></details>';
   }
 
   function notebookCard() {

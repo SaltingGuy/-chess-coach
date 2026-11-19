@@ -37,6 +37,16 @@
         (ob.rows.every(function (r) { return !r.total; }) ? '<p class="good">No leaks found in these games. 🎉</p>' : '') + '</section>';
     }
 
+    if (CT.Insights) {
+      var ts = CT.Insights.tiltStats();
+      if (ts.afterLossN >= 3) html += '<section class="card"><h2>🧊 After a loss</h2><p>In your real games you score <strong>' + ts.afterLoss + '%</strong> in a game started within 30 minutes of a loss (' + ts.afterLossN + ' games), <strong>' + (ts.afterWin != null ? ts.afterWin + '%' : '—') + '</strong> after a win, and <strong>' + (ts.afterBreak != null ? ts.afterBreak + '%' : '—') + '</strong> after a break of 30+ minutes.</p><p class="small muted">If the first number is clearly lower, a break after a loss is free rating points. The dashboard warns you after two losses in a row.</p></section>';
+    }
+    if (CT.Think) {
+      var rs = CT.Think.reasonStats();
+      if (rs.total >= 3) html += '<section class="card"><h2>🧠 Why your mistakes happen</h2><p class="small muted">From your own answers in Think-First (' + rs.total + ' turning points).</p>' +
+        rs.list.filter(function (x) { return x.n; }).map(function (x) { return '<div class="why-row"><span>' + esc(x.label) + '</span><span>' + Math.round(x.share * 100) + '%</span></div>' + UI.bar(x.share); }).join('') + '</section>';
+    }
+
     if (L.history.length) {
       html += '<section class="card"><h2>Past experiments</h2><ul class="nb-hist">' + L.history.slice().reverse().map(function (e) {
         var r = e.result || {}, badge = { improved: '<span class="tag ok">worked</span>', 'no-effect': '<span class="tag bad">no effect</span>', unclear: '<span class="tag">unclear</span>', stopped: '<span class="tag">paused</span>' }[e.verdict] || '';

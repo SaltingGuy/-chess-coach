@@ -81,13 +81,15 @@
   function nice(s) { return String(s || '').replace(/_/g, ' '); }
 
   var byId = {}, list = [];
-  D.pack.rows.split('\n').forEach(function (row) {
+  // Pack 1 (4,450 puzzles) and, when present, pack 2 (more and harder puzzles, built by a GitHub job).
+  [D.pack, D.pack2].forEach(function (pack) { if (pack && pack.rows) pack.rows.split('\n').forEach(function (row) {
     var f = row.split('|');
-    var themes = f[4] ? f[4].split('.').map(function (i) { return D.pack.themes[+i]; }) : [];
+    if (byId['L' + f[0]]) return;
+    var themes = f[4] ? f[4].split('.').map(function (i) { return pack.themes[+i]; }) : [];
     var p = {
-      id: 'L' + f[0], lichessId: f[0], source: 'lichess', exact: true,
+      id: 'L' + f[0], lichessId: f[0], source: 'lichess', exact: true, pack: pack === D.pack2 ? 2 : 1,
       rating: +f[3], rawFen: f[1], uci: f[2].split(' '), lichessThemes: themes,
-      opening: D.pack.openings[+f[5]] || '', flags: f[6] || '',
+      opening: pack.openings[+f[5]] || '', flags: f[6] || '',
       theme: appTheme(themes), level: levelOf(+f[3])
     };
     p.goal = themes.indexOf('mate') >= 0 ? 'mate' : 'material';
@@ -101,7 +103,7 @@
     lazy(p);
     byId[p.id] = p;
     list.push(p);
-  });
+  }); });
 
   /** Work out position and solution on first use. */
   function materialize(p) {

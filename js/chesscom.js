@@ -75,7 +75,10 @@
   /** New synced games you have not reviewed yet (analysed games drop off). */
   function pending() {
     var ids = S().newIds || [];
-    return ids.map(function (id) { return CT.Games.get(id); }).filter(function (g) { return g && !g.analysis; });
+    // New games you have not reviewed: not analysed yet, or analysed (maybe in the background) but not replayed with Think-First.
+    return ids.map(function (id) { return CT.Games.get(id); }).filter(function (g) {
+      return g && (!g.analysis || (CT.Think ? !CT.Think.done(g.id) && CT.Think.moments(g).length > 0 : false));
+    });
   }
   function clearPending() { S().newIds = []; CT.Store.save(); }
 

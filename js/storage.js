@@ -28,6 +28,7 @@
       danger: {},    // back-rank danger position id -> {attempts, ok, box, due, lastAt, lastOk}
       session: null, // today's guided session (see js/session.js)
       experiments: { active: null, history: [], n: 0 }, // the Coach's Lab (js/experiments.js)
+      think: { games: {}, reasons: {}, transfer: [] },    // Think-First replay (js/views/think.js)
       ccSync: {},    // chess.com auto-sync: {user, lastAt, lastEndTime, lastAdded, lastError, newIds}
       log: [],       // recent events: {t, kind, id, ok, theme?, ms?, hint?}
       days: {}       // 'YYYY-MM-DD' -> {puzzles, correct, drills, cleanDrills, quiz, quizOk}
@@ -61,6 +62,7 @@
     if (state.log.length > 3000) state.log = state.log.slice(-3000);
     // A running guided session checks after every save whether its current block is done.
     if (root.CT && root.CT.Session) { try { root.CT.Session.tick(); } catch (e) { /* never block saving */ } }
+    state.savedAt = Date.now();
     try { root.localStorage.setItem(KEY, JSON.stringify(state)); memoryOnly = false; return true; }
     catch (e) { memoryOnly = true; return false; }
   }
@@ -113,6 +115,7 @@
     schedule(rec, !!result.ok, false);
     state.puzzles[p.id] = rec;
     state.log.push({ t: Date.now(), kind: 'puzzle', id: p.id, theme: p.theme, ok: !!result.ok, ms: result.ms || 0, hint: !!result.usedHint });
+    if (root.CT.Think) root.CT.Think.markTransfer(p.id); // a "same idea, new position" card was answered
     // A missed check-in on a theme you tested out of puts the theme back into normal training.
     if (!result.ok && result.checkin && state.mastered[p.theme]) {
       delete state.mastered[p.theme];

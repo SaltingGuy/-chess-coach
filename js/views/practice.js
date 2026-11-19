@@ -39,7 +39,9 @@
     function render() {
       var s = O().STYLES[sel.style];
       var reps = CT.Data.repertoires;
+      var pt = CT.Insights ? CT.Insights.practiceTilt() : null;
       view.innerHTML = '<header class="page-head"><div><h1>Practice</h1><p class="muted">Full games against computer opponents with different personalities. After each game you get an explanation of what happened.</p></div><div class="engine-state">' + engineChip() + '</div></header>' +
+        (pt ? '<p class="warnbox small">🧊 You lost your last two practice games. A short break (or a few easy puzzles) before the next one usually helps more than playing on.</p>' : '') +
         (cur ? '<section class="card resume"><div class="row-between wrap"><div><h2>Game in progress</h2><p class="small muted">vs ' + esc(O().STYLES[cur.style].name) + ' · ' + lvlLabel(cur.level) + ' · ' + cur.moves.length + ' half-moves played</p></div>' +
           '<div class="btn-row"><a class="btn primary" href="#/practice/play">Resume</a><button class="btn" data-act="abandon">Abandon</button></div></div></section>' : '') +
         '<section class="card coach-pick"><h2>Coach suggests</h2><p><strong>' + O().STYLES[pick.style].icon + ' ' + esc(O().STYLES[pick.style].name) + '</strong> at ' + lvlLabel(pick.level) + '</p><p class="small">' + esc(pick.reason) + '</p>' +

@@ -34,8 +34,9 @@
     var streak = Store.streak();
     var live = CT.Session ? CT.Session.active() : null, ss = Store.state.session;
     var sessionLabel = live ? 'Resume training ▶' : (ss && ss.finished && ss.day === Store.dayKey(Date.now()) ? '✓ Today\'s session done — see it' : 'Start today\'s training ▶');
+    var backupNag = CT.Sync && !CT.Sync.configured() && CT.Sync.needsBackup() ? '<div class="card cc-banner backup-banner"><strong>💾 Your progress is only on this device</strong><span class="small muted">Back it up (or set up sync) so a cleared browser can\'t erase it.</span><span class="btn-row"><button class="btn small primary" data-act="quick-backup">Download backup</button><a class="btn small" href="#/progress?sync">Set up sync</a></span></div>' : '';
     var newGames = CT.ChessCom ? CT.ChessCom.pending() : [];
-    var ccBanner = newGames.length ? '<a class="card cc-banner" href="#/analysis/games"><strong>📥 ' + newGames.length + ' new chess.com game' + (newGames.length > 1 ? 's' : '') + '</strong><span class="small muted">Review them — your mistakes become tomorrow\'s training.</span><span class="btn small primary">Review</span></a>' : '';
+    var ccBanner = newGames.length ? '<a class="card cc-banner" href="' + (CT.Think && newGames[0] && newGames[0].analysis && CT.Think.moments(newGames[0]).length ? '#/analysis/think/' + newGames[0].id : '#/analysis/games') + '"><strong>📥 ' + newGames.length + ' new chess.com game' + (newGames.length > 1 ? 's' : '') + '</strong><span class="small muted">Review them — your mistakes become tomorrow\'s training.</span><span class="btn small primary">Review</span></a>' : '';
 
     var items = plan.items.map(function (it) {
       var locked = it.needs === 'game' && !(Store.today().games);
@@ -78,11 +79,17 @@
     }).join('');
 
     var pc = Store.state.practiceCurrent, resume = pc ? '<a class="card resume-card" href="#/practice/play"><span class="quick-ico">♟</span><span><strong>Game in progress</strong><small>vs ' + esc(CT.Opponent.STYLES[pc.style].name) + ' · level ' + pc.level + ' · ' + pc.moves.length + ' half-moves played</small></span><span class="btn small primary">Resume</span></a>' : '';
-    view.innerHTML = resume + ccBanner +
+    var tilt = CT.Insights ? CT.Insights.tiltNow() : null;
+    var tiltBanner = tilt ? '<div class="card cc-banner tilt-banner"><strong>🧊 Two losses in a row</strong><span class="small">Players score worse straight after losses — most of all below 1200. Take a 30-minute break before your next rated game' +
+      (tilt.stats.afterLossN >= 5 && tilt.stats.afterBreakN >= 5 ? ': in your own games you score <strong>' + tilt.stats.afterLoss + '%</strong> right after a loss, <strong>' + tilt.stats.afterBreak + '%</strong> after a break' : '') +
+      ' (until ' + new Date(tilt.resumeAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + '). Training here is fine.</span><button class="btn small" data-act="tilt-ok">Got it</button></div>' : '';
+    var preview = CT.Session ? CT.Session.plan(Store.state.profile.sessionLen || 'normal') : null;
+    view.innerHTML = resume + tiltBanner + backupNag + ccBanner +
       '<section class="hero">' +
         '<div class="hero-text"><p class="eyebrow">' + greet + '</p><h1>Train like a trickster —<br>calculate like a defender.</h1>' +
-        '<p class="muted">Rating ~' + rating + ' · ' + (ms.current ? 'Milestone reached: <strong>' + ms.current.m.rating + '</strong>' : 'No milestone reached yet') + (nextM ? ' → working toward <strong>' + nextM.m.rating + '</strong> (' + nextM.done + '/' + nextM.total + ')' : '') + ' · Tactics tier ' + tier.tier + ' · ' + plan.minutes + '-minute session</p>' +
-        '<div class="btn-row"><a class="btn primary big" href="#/session">' + sessionLabel + '</a><a class="btn big" href="#/lab/threats">Hidden-threat drill</a></div></div>' +
+        '<p class="muted">Rating ~' + rating + ' · ' + (nextM ? 'working toward <strong>' + nextM.m.rating + '</strong> (' + nextM.done + '/' + nextM.total + ')' : ms.current ? 'milestone <strong>' + ms.current.m.rating + '</strong> reached' : '') + '</p>' +
+        '<div class="btn-row"><a class="btn primary big" href="#/session">' + sessionLabel + '</a></div>' +
+        (preview && !live ? '<p class="small muted session-preview">' + preview.blocks.map(function (b) { return '<span title="' + esc(b.title) + '">' + b.icon + '</span>'; }).join(' → ') + ' · ' + (preview.type === 'play' ? '♟ Play day' : '📘 Study day') + '</p>' : '') + '</div>' +
         '<div class="hero-rings">' +
           ring(totals.firstTryRate, UI.pct(totals.firstTryRate), 'tactics accuracy', 'var(--teal)') +
           ring(lines.length ? learned / lines.length : 0, learned + '/' + lines.length, 'opening lines', 'var(--accent)') +
@@ -90,28 +97,34 @@
         '</div>' +
       '</section>' +
       '<section class="grid-2">' +
+        '<div class="card"><h2>Your coach</h2>' +
+          '<h3 class="mt">Weak spots</h3><div class="chips">' + weak + '</div>' + hungHtml() + labLine() + '</div>' +
         '<div class="card"><div class="row-between"><h2>Today\'s plan</h2><span class="small muted">' + plan.minutes + ' min</span></div>' + dayHead +
-          '<a class="btn primary plan-all" href="#/session">' + (live ? 'Resume the guided session ▶' : '▶ Do it all as one guided session') + '</a>' + planHtml +
-          '<a class="plan-row" href="#/analysis"><span class="plan-ico">⌕</span><span class="plan-main"><strong>Review a real game</strong><small>Played a rapid game on chess.com? Paste it here for a coach report.</small></span><span class="btn small">Analyse</span></a></div>' +
-        '<div class="card"><h2>Last 14 days</h2>' + chart +
-          '<h3 class="mt">Weak spots</h3><div class="chips">' + weak + '</div>' + hungHtml() + labLine() +
-          '<h3 class="mt">Tier progress</h3><p class="small">' + (tier.tier < 4 ? esc(tier.need) + ' <span class="muted">Now ' + UI.pct(tier.recentAtTier ? tier.accuracyAtTier : null) + ' over ' + tier.recentAtTier + '.</span>' : 'All four tactical tiers unlocked.') + '</p></div>' +
+          '<a class="btn primary plan-all" href="#/session">' + (live ? 'Resume the guided session ▶' : '▶ Do it all as one guided session') + '</a>' +
+          '<details class="tool"><summary>Or do the parts one by one</summary>' + planHtml +
+          '<a class="plan-row" href="#/analysis"><span class="plan-ico">⌕</span><span class="plan-main"><strong>Review a real game</strong><small>Paste or import a game for a coach report.</small></span><span class="btn small">Analyse</span></a></details></div>' +
       '</section>' +
-      insightsCard() +
       '<section class="quick-grid">' +
-        tile('#/tactics', '⚔', 'Tactical Academy', D.puzzles.length + ' verified puzzles') +
+        tile('#/tactics', '⚔', 'Tactical Academy', D.puzzles.length.toLocaleString() + ' verified puzzles') +
         tile('#/openings', '♘', 'Opening Academy', D.openingLines.length + ' lines · explore, spar, quiz') +
         tile('#/practice', '♟', 'Practice', '7 opponent styles · 8 levels') +
         tile('#/endgames', '♚', 'Endgame Academy', '5 exact drills · Convert the Win') +
         tile('#/analysis', '⌕', 'Game Analysis', CT.Games.list().length + ' saved games · coach reports') +
       '</section>' +
-      '<section class="grid-2">' +
-        milestoneCard(nextM) +
-        '<div class="card"><h2>Recent activity</h2>' + (recent ? '<ul class="recent">' + recent + '</ul>' : '<p class="muted">Nothing yet — start with today\'s tactics.</p>') + '</div>' +
-      '</section>' +
+      '<details class="more-stats"><summary>More stats</summary>' +
+      '<section class="grid-2"><div class="card"><h2>Last 14 days</h2>' + chart +
+          '<h3 class="mt">Tier progress</h3><p class="small">' + (tier.tier < 4 ? esc(tier.need) + ' <span class="muted">Now ' + UI.pct(tier.recentAtTier ? tier.accuracyAtTier : null) + ' over ' + tier.recentAtTier + '.</span>' : 'All four tactical tiers unlocked.') + '</p></div>' +
+        milestoneCard(nextM) + '</section>' +
+      insightsCard() +
+      '<section class="card"><h2>Recent activity</h2>' + (recent ? '<ul class="recent">' + recent + '</ul>' : '<p class="muted">Nothing yet — start with today\'s training.</p>') + '</section>' +
+      '</details>' +
       (CT.Store.memoryOnly ? '<p class="warnbox">Your browser is blocking storage, so progress will not be saved after you close this page.</p>' : '');
     var sw = view.querySelector('[data-act="swap-day"]');
     if (sw) sw.addEventListener('click', function () { Coach.setDayType(plan.type === 'play' ? 'study' : 'play'); render(view); });
+    var tb = view.querySelector('[data-act="tilt-ok"]');
+    if (tb) tb.addEventListener('click', function () { CT.Insights.dismissTilt(); render(view); });
+    var qb = view.querySelector('[data-act="quick-backup"]');
+    if (qb) qb.addEventListener('click', function () { UI.download('chess-trainer-backup-' + Store.dayKey() + '.json', Store.exportJSON(), 'application/json'); CT.Sync.markBackedUp(); render(view); });
   }
 
   function milestoneCard(nm) {

@@ -59,7 +59,7 @@
   }
 
   function route() {
-    var path = (location.hash || '#/').slice(1) || '/';
+    var path = ((location.hash || '#/').slice(1) || '/').split('?')[0]; // "#/progress?sync" → progress page, opened at sync
     var parts = path.split('/').filter(Boolean);
     if (cleanup) { try { cleanup(); } catch (e) { /* ignore */ } cleanup = null; }
     document.body.classList.remove('show-more');
@@ -98,6 +98,7 @@
       else if (p0 === 'endgames') V.endgames(view);
       else if (p0 === 'board') V.freeboard(view);
       else if (p0 === 'analysis' && parts[1] === 'game') cleanup = V.analysisGame(view, parts[2], parts[3]);
+      else if (p0 === 'analysis' && parts[1] === 'think') cleanup = V.think(view, parts[2]);
       else if (p0 === 'analysis' && parts[1] === 'games') V.analysisGames(view);
       else if (p0 === 'analysis' && parts[1] === 'patterns') V.analysisPatterns(view);
       else if (p0 === 'analysis') V.analysisImport(view);
@@ -136,6 +137,15 @@
       CT.Experiments.update().forEach(function (e) { CT.UI.toast(e.kind === 'concluded' ? CT.Experiments.verdictText(e.exp) : '🔬 New experiment: ' + CT.Experiments.label(e.exp.symptom, e.exp.motif).toLowerCase()); });
       setTimeout(function () { CT.Experiments.analyseQueue(3, function () { if (/^#\/?$|^$/.test(location.hash)) route(); }); }, 2500);
     };
-    if (CT.ChessCom) CT.ChessCom.autoStart().then(labTick, labTick); else labTick();
+    // Keep data safe: ask the browser to keep it, sync with your GitHub first (other device's work), then chess.com.
+    if (CT.Sync) { CT.Sync.persist(); }
+    var syncFirst = CT.Sync ? CT.Sync.autoSync().then(function (r) { if (r && r.ok && r.pulled) route(); }, function () {}) : Promise.resolve();
+    syncFirst.then(function () { if (CT.ChessCom) CT.ChessCom.autoStart().then(labTick, labTick); else labTick(); });
+    // Leaving the app (switching apps, closing the tab): save to GitHub if something changed.
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState !== 'hidden' || !CT.Sync || !CT.Sync.configured()) return;
+      var info = CT.Store.state.syncInfo || {};
+      if ((CT.Store.state.savedAt || 0) > (info.lastOk || 0) + 5000) CT.Sync.sync();
+    });
   });
 })(window);

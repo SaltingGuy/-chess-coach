@@ -72,15 +72,17 @@
     add(first);
 
     if (size > 0) {
-      var pending = CT.ChessCom ? CT.ChessCom.pending() : [];
-      var unreviewed = pending.length ? pending : (CT.Games ? CT.Games.list().filter(function (g) { return !g.analysis; }) : []);
+      // Games not yet replayed with Think-First (newest chess.com games first).
+      var thinkable = function (g) { return g.userColor && !(CT.Think && CT.Think.done(g.id)) && (!g.analysis || (CT.Think && CT.Think.moments(g).length)); };
+      var pending = (CT.ChessCom ? CT.ChessCom.pending() : []).filter(thinkable);
+      var unreviewed = pending.length ? pending : (CT.Games ? CT.Games.list().filter(thinkable) : []);
       var pick = C.practicePick ? C.practicePick() : null;
       var gameBlock = { key: 'game', icon: '♟', title: 'Serious game (15+10)', href: '#/practice', counter: 'games', target: 1,
         reason: 'One slow game' + (pick ? ' vs ' + CT.Opponent.STYLES[pick.style].name + ' (level ' + pick.level + ', chosen for your weak spots)' : '') + ' with Safety check on. Then review it.' };
       var reviewBlock = unreviewed.length ?
-        { key: 'review', icon: '⌕', title: 'Review your game', href: '#/analysis/game/' + unreviewed[0].id, counter: 'analysed', target: 1,
-          reason: 'Your ' + (pending.length ? 'latest chess.com ' : '') + 'game vs ' + (opponentOf(unreviewed[0]) || 'your opponent') + ' — think about your turning points first, then let the engine show what you missed.' } :
-        { key: 'review', icon: '⌕', title: 'Review your game', href: '#/analysis/games', counter: 'analysed', target: 1, reason: 'Review the game you just played — your mistakes become tomorrow\'s puzzles.' };
+        { key: 'review', icon: '🧠', title: 'Think-First review', href: '#/analysis/think/' + unreviewed[0].id, counter: 'think', target: 1,
+          reason: 'Your ' + (pending.length ? 'latest chess.com ' : '') + 'game vs ' + (opponentOf(unreviewed[0]) || 'your opponent') + ' — find the better moves at your turning points yourself, then see what the engine says.' } :
+        { key: 'review', icon: '🧠', title: 'Think-First review', href: '#/analysis/games', counter: 'think', target: 1, reason: 'Replay the turning points of the game you just played — your mistakes become tomorrow\'s puzzles.' };
       if (type === 'play') { gameBlock.alts = unreviewed.length ? [reviewBlock] : []; add(gameBlock); add(Object.assign({}, reviewBlock, { key: 'review2', href: '#/analysis/games', reason: 'Review the game you just played — your mistakes become tomorrow\'s puzzles.', afterGame: true })); }
       else if (unreviewed.length) { reviewBlock.alts = [gameBlock]; add(reviewBlock); }
     }
@@ -117,8 +119,8 @@
     if (b) { b.base = counter(b.counter); b.startedAt = Date.now(); }
     // "Review the game you just played": open that game directly.
     if (b && b.afterGame && CT.Games) {
-      var g = CT.Games.list().filter(function (x) { return !x.analysis; })[0];
-      if (g) b.href = '#/analysis/game/' + g.id;
+      var g = CT.Games.list().filter(function (x) { return x.userColor && !(CT.Think && CT.Think.done(x.id)); })[0];
+      if (g) b.href = '#/analysis/think/' + g.id;
     }
   }
   function current() { var s = active(); return s ? s.blocks[s.idx] : null; }
