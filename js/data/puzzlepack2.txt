@@ -1,0 +1,42 @@
+Built 2026-11-19 from lichess_db_puzzle.csv.zst
+first pack ids: 4450
+rows read: 6193530
+backrank-combo kept 700 of 36925
+band10 kept 650 of 222007
+band11 kept 650 of 368698
+band12 kept 650 of 239096
+band13 kept 650 of 278197
+band14 kept 650 of 280307
+band15 kept 650 of 281304
+band16 kept 650 of 275916
+band17 kept 650 of 228541
+band18 kept 650 of 200045
+band19 kept 650 of 216844
+band20 kept 650 of 185533
+band21 kept 650 of 138972
+band6 kept 400 of 56227
+band7 kept 400 of 83246
+band8 kept 400 of 142919
+band9 kept 400 of 276983
+defence kept 400 of 125767
+motif-attraction kept 260 of 134355
+motif-backRankMate kept 260 of 60584
+motif-defensiveMove kept 260 of 125888
+motif-deflection kept 260 of 158139
+motif-discoveredAttack kept 260 of 186875
+motif-doubleCheck kept 260 of 19158
+motif-exposedKing kept 260 of 91711
+motif-fork kept 260 of 461346
+motif-hangingPiece kept 260 of 108549
+motif-intermezzo kept 260 of 41353
+motif-kingsideAttack kept 260 of 272338
+motif-mateIn1 kept 260 of 396746
+motif-mateIn2 kept 260 of 449227
+motif-pin kept 260 of 206260
+motif-quietMove kept 260 of 72743
+motif-skewer kept 260 of 80062
+motif-smotheredMate kept 260 of 12949
+motif-trappedPiece kept 260 of 42136
+15155 selected {'H': 7797, '-': 6658, 'B': 697, 'BH': 3}
+15149 verified; rejected: {"mateLen":6} ; size 1507 KB
+openings: 167 , Caro-Kann_Defense, Sicilian_Defense, Indian_Defense, Zukertort_Opening, Caro-Kann_Defense_Panov_Attack, Sicilian_Defense_Classical_Variation, Nimzo-Larsen_Attack, Dutch_Defense, Kings_Gambit_Accepted, Philidor_Defense, Elephant_Gambit, French_Defense, Ruy_Lopez_Classical_Variation, Kings_Pawn_Game, Scotch_Game, Bishops_Opening, Slav_Defense, Englund_Gambit_Complex_Declined, Modern_Defense, Italian_Game_Two_Knights_Defense, French_Defense_Exchange_Variation, Vant_Kruijs_Opening, Horwitz_Defense, Italian_Game
