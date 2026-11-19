@@ -24,7 +24,7 @@ jobs:
           set -euo pipefail
           curl -sSL --retry 3 -o /tmp/puzzles.csv.zst https://database.lichess.org/lichess_db_puzzle.csv.zst
           ls -la /tmp/puzzles.csv.zst
-          zstdcat /tmp/puzzles.csv.zst | head -2
+          (zstdcat /tmp/puzzles.csv.zst | head -2) || true
       - name: Select and verify
         run: |
           set -euo pipefail
